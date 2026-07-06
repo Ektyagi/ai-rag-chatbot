@@ -1,4 +1,25 @@
-.venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.venv/
+
+# Environment
 .env
+
+# Chroma Database
+vectorstore/
+
+# Uploaded PDFs
+uploads/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
