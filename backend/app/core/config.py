@@ -1,22 +1,16 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    APP_NAME: str
-    APP_VERSION: str
-    DEBUG: bool
+    OPENAI_API_KEY: str
 
-    OPENAI_API_KEY: str = ""
-    GEMINI_API_KEY: str = ""
+    CHUNK_SIZE: int = 1000
+    CHUNK_OVERLAP: int = 200
 
-    DATABASE_URL: str = ""
+    CHROMA_COLLECTION_NAME: str = "company_documents"
 
-    CHROMA_DB_PATH: str = "vectorstore"
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        case_sensitive=True
-    )
+    class Config:
+        env_file = ".env"
 
 
 settings = Settings()
