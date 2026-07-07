@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.core.config import settings
@@ -13,59 +15,79 @@ llm = ChatGoogleGenerativeAI(
 
 def chat(question: str):
 
-    # Retrieve the most relevant chunks
+    # Retrieve relevant chunks
     results = vector_store.similarity_search_with_score(
         query=question,
         k=5,
     )
 
-    # If nothing is found
     if not results:
         return {
             "answer": "I couldn't find any relevant information in the uploaded documents.",
-            "sources": []
+            "sources": [],
         }
 
-    # Build the context
-    context = "\n\n".join(
-        doc.page_content
-        for doc, score in results
-    )
+    context = ""
 
-    # Prompt
-    prompt = f"""
-You are an AI assistant.
+    # Store unique sources
+    unique_sources = defaultdict(list)
 
-Use ONLY the provided context to answer the user's question.
+    for i, (doc, score) in enumerate(results, start=1):
 
-Rules:
-- Never use outside knowledge.
-- If the answer is not present in the context, respond:
-  "I couldn't find that information in the uploaded documents."
-- Keep the answer concise.
-- Quote important information exactly when possible.
+        context += f"""
+DOCUMENT CHUNK {i}
 
-Context:
-{context}
+{doc.page_content}
 
-Question:
-{question}
-
-Answer:
+-----------------------------------
 """
 
-    # Generate response
+        source = doc.metadata.get("source")
+        chunk = doc.metadata.get("chunk")
+
+        if chunk is not None:
+            unique_sources[source].append(chunk)
+
+    prompt = f"""
+You are an AI assistant that answers questions ONLY using the provided context.
+
+Instructions:
+
+- Read every document chunk carefully.
+- Use ONLY the provided context.
+- Never use outside knowledge.
+- If the answer cannot be found in the context, respond:
+  "I couldn't find that information in the uploaded documents."
+- If multiple chunks contain useful information, combine them into one answer.
+- Keep the answer concise.
+- Quote important statements when appropriate.
+
+=========================
+CONTEXT
+=========================
+
+{context}
+
+=========================
+QUESTION
+=========================
+
+{question}
+
+=========================
+ANSWER
+=========================
+"""
+
     response = llm.invoke(prompt)
 
-    # Prepare sources
     sources = []
 
-    for doc, score in results:
+    for source, chunks in unique_sources.items():
         sources.append(
             {
-                "source": doc.metadata.get("source"),
-                "chunk": doc.metadata.get("chunk"),
-                "distance": round(score, 4),
+                "source": source,
+                "chunks": sorted(chunks),
             }
         )
 
