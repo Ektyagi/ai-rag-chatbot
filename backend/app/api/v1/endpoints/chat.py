@@ -8,4 +8,7 @@ router = APIRouter()
 
 @router.post("/chat")
 def chat_endpoint(request: ChatRequest):
-    return chat(request.question)
+    return chat(
+        request.conversation_id,
+        request.question,
+    )

@@ -27,6 +27,7 @@ export default function ChatPage() {
   const handleSend = async (text) => {
     if (!text.trim()) return;
 
+    // User message
     const userMessage = {
       role: "user",
       content: text,
@@ -36,7 +37,7 @@ export default function ChatPage() {
 
     updateMessages(updatedMessages);
 
-    // Rename "New Chat" after first message
+    // Rename conversation after first message
     if (
       activeConversation.title === "New Chat" &&
       updatedMessages.length === 1
@@ -49,7 +50,11 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const response = await sendMessage(text, updatedMessages);
+      // Send conversation ID and question
+      const response = await sendMessage(
+        activeConversation.id.toString(),
+        text,
+      );
 
       const assistantMessage = {
         role: "assistant",
